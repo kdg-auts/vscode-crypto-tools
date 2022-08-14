@@ -10,11 +10,11 @@ const fs = require('fs')
 const fence = require('./scripts/Fence')
 
 /**
- * 插件被激活时触发，所有代码总入口
- * @param {*} context 插件上下文
+ * Triggered when the plugin is activated, the total entry of all codes
+ * @param {*} context plugin context
  */
 
-//格式化
+//format
 String.prototype.format = function () {
 	var args = arguments;
 	return this.replace(/\{(\d+)\}/gm, (ms, p1) => {
@@ -22,7 +22,7 @@ String.prototype.format = function () {
 	});
 }
 
-//显示信息与更新文本
+//Display information and update text
 function print(text) {
 	outputChannel.show();
 	outputChannel.appendLine(text);
@@ -40,18 +40,18 @@ function showUpdate(alg, before, after, update) {
 			editor.edit(editBuilder => {
 				editBuilder.replace(selection, after);
 			});
-			print('[ ✔ ] 文本已自动更新，按 Ctrl + Z 撤销');
+			print('[ ✔ ] Text has been updated automatically, press Ctrl + Z to undo');
 		}
 		print("------------------------------------");
 	} else {
-		vscode.window.showErrorMessage("转换失败！请检查文本类型或查看日志！")
+		vscode.window.showErrorMessage("Conversion failed! Please check the text type or check the log!")
 	}
 }
 
 
-//破解hash
+//crack hash
 function crackHash(text) {
-	vscode.window.showInformationMessage("请确保网络和Python环境正常，正在破解中···");
+	vscode.window.showInformationMessage("Please ensure that the network and Python environment are normal and are being cracked...");
 	system('python {0}/scripts/HashBuster.py -s {1}'.format(__dirname, text), (err, stdout) => {
 		if (stdout.indexOf("[-]") == -1) {
 			let hashtype = stdout.split('\n')[0].split('[!]')[1].trim()
@@ -75,7 +75,7 @@ function crackHash(text) {
 
 function crackHashInFile() {
 	let file = vscode.window.activeTextEditor.document.fileName;
-	vscode.window.showInformationMessage("请确保网络和Python环境正常，正在破解中···");
+	vscode.window.showInformationMessage("Please ensure that the network and Python environment are normal and are being cracked...");
 	system('python {0}/scripts/HashBuster.py -f {1}'.format(__dirname, file), (err, stdout) => {
 		print("------------------------------------");
 		print(stdout)
@@ -86,22 +86,22 @@ function crackHashInFile() {
 	})
 }
 
-//凯撒
+//Caesar
 async function Caesar(text) {
 	result = caesar.caesar(text);
 	console.log(result);
 	let choise = await vscode.window.showQuickPick(result, {
-		placeHolder: '选择其中一种结果进行替换'
+		placeHolder: 'Choose one of the results to replace'
 	});
 	if (choise) {
-		vscode.window.showInformationMessage("选择了位移了" + result.indexOf(choise) + "位的结果");
+		vscode.window.showInformationMessage("selected displacement " + result.indexOf(choise) + " bit result");
 		showUpdate("Caesar", text, choise, true);
 	}
 }
-//位移
+//displacement
 async function Shift(text) {
 	let value = await vscode.window.showInputBox({
-		prompt: '输入最大的位移位数n和方向l或r，以逗号隔开',
+		prompt: 'Enter the maximum number of shift bits N and the direction L or R, separated by commas',
 		value: "50,l"
 	});
 	if (value) {
@@ -110,15 +110,15 @@ async function Shift(text) {
 		result = caesar.shift(text, n, d);
 		console.log(result);
 		let choise = await vscode.window.showQuickPick(result, {
-			placeHolder: '选择其中一种结果进行替换'
+			placeHolder: 'Choose one of the results to replace'
 		});
 		if (choise) {
-			vscode.window.showInformationMessage("选择了位移了" + result.indexOf(choise) + "位的结果");
+			vscode.window.showInformationMessage("selected displacement " + result.indexOf(choise) + " bit result");
 			showUpdate("Shift", text, choise, true);
 		}
 	}
 }
-//栅栏
+//fence
 async function Fence(text, alg) {
 	let result = []
 	if (alg.includes("Encode")) {
@@ -132,18 +132,18 @@ async function Fence(text, alg) {
 	}
 	console.log(result);
 	let choise = await vscode.window.showQuickPick(result, {
-		placeHolder: '选择其中一种结果进行替换'
+		placeHolder: 'Choose one of the results to replace'
 	});
 	if (choise) {
-		vscode.window.showInformationMessage("选择了栏数为" + (result.indexOf(choise) + 2) + "的结果");
+		vscode.window.showInformationMessage("The number of columns selected is " + (result.indexOf(choise) + 2) + " result");
 		showUpdate("Shift", text, choise, true);
 	}
 }
 
-//维吉尼亚
+//Vigenere
 async function Vigenere(text, alg) {
 	let key = await vscode.window.showInputBox({
-		placeHolder: '输入秘钥'
+		placeHolder: 'enter key'
 	});
 	if (key) {
 		if (alg.includes("Encode")) {
@@ -157,32 +157,32 @@ async function Vigenere(text, alg) {
 
 
 async function vigenereAutoDecode(text) {
-	let minlen = 1; //从1开始猜测key的长度
+	let minlen = 1; //Guess the length of the key from 1
 	while (true) {
 		let guessKey = new Promise((resolve) => {
-			let result = vigenere.deVigenereAuto(text, false, minlen, 100); //默认key的长度未知
+			let result = vigenere.deVigenereAuto(text, false, minlen, 100); //The length of the default key is unknown
 			resolve(result);
 		});
 		result = await guessKey;
 		showUpdate("vigenereAutoDecode", text, result[0], false);
-		print("最有可能的key为：" + result[1]);
-		minlen = result[2] + 1; //如果没猜对，从猜出的秘钥长度+1之后继续猜
-		let choise = await vscode.window.showInformationMessage("请在输出日志中确认秘钥和明文是否猜测正确？", "是", "否");
-		if (choise != "否") {
+		print("The most likely keys are:" + result[1]);
+		minlen = result[2] + 1; //If the guess is not correct, continue to guess from the guessed key length + 1
+		let choise = await vscode.window.showInformationMessage("Please confirm in the output log whether the key and plaintext are guessed correctly？", "Yes", "No");
+		if (choise != "No") {
 			showUpdate("vigenereAutoDecode", text, result[0], true);
 			break;
 		}
 	}
 }
 
-//对称加密
+//Symmetric encryption
 async function symmetricCryption(text, alg) {
 	let algorithm = await vscode.window.showQuickPick(crypto.getCiphers(), {
-		placeHolder: "请选择要使用的对称加密算法"
+		placeHolder: "Please select the symmetric encryption algorithm to use"
 	})
 	if (algorithm) {
 		let value = await vscode.window.showInputBox({
-			placeHolder: '请输入秘钥和初始向量,以逗号隔开,可不填',
+			placeHolder: 'Please enter the secret key and initial vector, separated by commas, optional',
 		});
 		let key = value.split(',')[0] || "";
 		let iv = value.split(',')[1] || "";
@@ -212,22 +212,22 @@ async function symmetricCryption(text, alg) {
 	}
 }
 
-//RSA加密
+//RSA encryption
 function checkKey(keyfile, key) {
 	let pri = [crypto.privateEncrypt, crypto.privateDecrypt];
 	let pub = [crypto.publicEncrypt, crypto.publicDecrypt]
 	if (key.includes("PRIVATE")) {
-		print("选择了私钥文件: " + keyfile)
+		print("Private key file selected: " + keyfile)
 		return pri
 	} else if (key.includes("PUBLIC")) {
-		print("选择了公钥文件: " + keyfile)
+		print("Public key file selected: " + keyfile)
 		return pub
 	} else {
-		print("[ ✘ ] 秘钥格式似乎不对");
-		print("私钥的开头和结尾分别为:");
+		print("[ ✘ ] The key format seems to be wrong");
+		print("The private key begins and ends with:");
 		print("-----BEGIN RSA PRIVATE KEY-----");
 		print("-----END RSA PRIVATE KEY-----");
-		print("公钥的开头和结尾分别为:");
+		print("The public key begins and ends with:");
 		print("-----BEGIN PUBLIC KEY-----");
 		print("-----END PUBLIC KEY-----")
 	}
@@ -236,7 +236,7 @@ function checkKey(keyfile, key) {
 async function rsaCryption(text, alg) {
 	try {
 		let file = await vscode.window.showOpenDialog({
-			openLabel: '选择秘钥'
+			openLabel: 'Select key'
 		});
 		if (file) {
 			let keyfile = file[0].fsPath;
@@ -255,11 +255,11 @@ async function rsaCryption(text, alg) {
 	}
 }
 
-//摩斯
+//Morse
 async function Morse(text, alg) {
 	let value = await vscode.window.showInputBox({
 		value: "{ space: '/', long: '-', short: '.' }",
-		prompt: "请输入对应的间隔符、划、点的符号"
+		prompt: "Please enter the corresponding spacer, dash, dot symbol"
 	});
 	if (value) {
 		let option = eval('(' + value + ')');
@@ -272,10 +272,10 @@ async function Morse(text, alg) {
 	};
 }
 
-//十六进制计算器
+//hex calculator
 async function calculator(text) {
 	let value = await vscode.window.showInputBox({
-		placeHolder: '输入要计算的公式，非十进制数以0x、0b、0o开头',
+		placeHolder: 'Enter the formula to be calculated, non-decimal numbers start with 0x, 0b, 0o',
 		value:text
 	});
 	if (value) {
@@ -296,29 +296,29 @@ async function calculator(text) {
 			showUpdate("hexadecimalConverter", value, log, false);
 		}
 		catch (err) {
-			vscode.window.showErrorMessage("输入非公式，将先转换成十六进制再计算")
+			vscode.window.showErrorMessage("Enter a non-formula, it will be converted to hexadecimal first and then calculated")
 			let hex = '0x' + basic.string2hex(value);
 			calculator(hex);
 			}
 	}
 }
 
-//处理text/x-code-output兼容问题
-//获取output channel的高亮语法
+//Handle text/x-code-output compatibility issues
+//Get the highlighted syntax of the output channel
 function getPatterns(file) {
 	let content = fs.readFileSync(file, "utf-8");
 	let patterns = /<key>patterns<\/key>[\s|\S]*?<array>([\s|\S]*?)<\/array>/.exec(content)[1];
 	return patterns
 }
 
-//去除相关插件JSON文件里的"text/x-code-output"，以免冲突
+//Remove "text/x-code-output" in the related plugin JSON file to avoid conflicts
 function rmOutput(file) {
 	let content = fs.readFileSync(file, "utf-8");
 	let New = content.replace("text/x-code-output", "text/bak-x-code-output");
 	fs.writeFileSync(file, New);
 }
 
-//获取定义了output channel语法的文件，并整合语法
+//Get the file that defines the output channel syntax and integrate the syntax
 function getLang() {
 	let lang = '';
 	const extension = vscode.extensions.all
@@ -331,7 +331,7 @@ function getLang() {
 					let extensionPath = e.extensionPath;
 					let grammarsPath = e.packageJSON.contributes.grammars[0].path.substr(1);
 					rmOutput(manip.convPath(extensionPath + "/package.json"));
-					print("发现定义了output语法的冲突插件:\n" + extensionPath);
+					print("Found conflicting plugins that define output syntax:\n" + extensionPath);
 					file = manip.convPath(extensionPath + grammarsPath);
 					console.log(file);
 					lang += '        <!-- ' + id + ' start -->' + getPatterns(file) + '<!-- ' + id + ' end -->\n';
@@ -347,123 +347,123 @@ function getLang() {
 outputChannel = vscode.window.createOutputChannel('crypto');
 
 exports.activate = context => {
-	// 注册命令
+	// register command
 	context.subscriptions.push(vscode.commands.registerCommand('crypto.EncodeDecode', async () => {
 		editor = vscode.window.activeTextEditor;
 		selection = editor.selection;
 		let text = editor.document.getText(selection).trim();
 		let algorithm = await vscode.window.showQuickPick([{
 				label: "ROT13",
-				detail: "ROT13加密",
+				detail: "ROT13 encryption",
 				target: basic.rot13
 			},
 			{
 				label: "Base64/32/16 Decode",
-				detail: "自动进行base64/32/16解密",
+				detail: "Automatic base64/32/16 decryption",
 				target: basic.baseDecode
 			},
 			{
 				label: "Base64 Encode",
-				detail: "base64加密",
+				detail: "base64 encryption",
 				target: basic.base64Encode
 			},
 			{
 				label: "Base32 Encode",
-				detail: "base32加密",
+				detail: "base32 encryption",
 				target: basic.base32Encode
 			},
 			{
 				label: "Base16 Encode",
-				detail: "base16加密",
+				detail: "base16 encryption",
 				target: basic.base16Encode
 			},
 			{
 				label: "MD5",
-				detail: "MD5哈希算法",
+				detail: "MD5 hash algorithm",
 				target: basic.md5Hash
 			},
 			{
 				label: "SHA512",
-				detail: "SHA512哈希算法",
+				detail: "SHA512 hash algorithm",
 				target: basic.sha512Hash
 			},
 			{
 				label: "Url Decode",
-				detail: "url加密",
+				detail: "url decode",
 				target: basic.urlDecode
 			},
 			{
 				label: "Url Encode",
-				detail: "url解密",
+				detail: "url encode",
 				target: basic.urlEncode
 			},
 			{
 				label: "Html Entities",
-				detail: "html加密",
+				detail: "html encode",
 				target: basic.htmlEncode
 			},
 			{
 				label: "Html Entity Decode",
-				detail: "html解密",
+				detail: "html decode",
 				target: basic.htmlDecode
 			},
 			{
 				label: "Quote-Printable Decode",
-				detail: "Quote-Printable解密",
+				detail: "Quote-Printable decode",
 				target: basic.quopriDecode
 			},
 			{
 				label: "Quote-Printable Encode",
-				detail: "Quote-Printable加密",
+				detail: "Quote-Printable encode",
 				target: basic.quopriEncode
 			},
 			{
 				label: "Bubble Babble Decode",
-				detail: "Bubble Babble 解密",
+				detail: "Bubble Babble decode",
 				target: basic.bubbleDecode
 			},
 			{
 				label: "Bubble Babble Encode",
-				detail: "Bubble Babble 加密",
+				detail: "Bubble Babble encode",
 				target: basic.bubbleEncode
 			},
 			{
 				label: "Brainfuck Decode",
-				detail: "Brainfuck 解密",
+				detail: "Brainfuck decode",
 				target: basic.brainfuckDecode
 			},
 			{
 				label: "Number To String",
-				detail: "整型转字符",
+				detail: "Integer to character",
 				target: basic.number2string
 			},
 			{
 				label: "String To Number",
-				detail: "字符转整型",
+				detail: "Character to integer",
 				target: basic.string2number
 			},
 			{
 				label: "String To Hex",
-				detail: "字符转十六进制",
+				detail: "Character to Hexadecimal",
 				target: basic.string2hex
 			},
 			{
 				label: "Hex To String",
-				detail: "十六进制转字符",
+				detail: "Hexadecimal to Character",
 				target: basic.hex2string
 			},
 			{
 				label: "String To Bin",
-				detail: "字符转二进制",
+				detail: "Character to Binary",
 				target: basic.string2bin
 			},
 			{
 				label: "Bin To String",
-				detail: "二进制转字符",
+				detail: "Binary to Character",
 				target: basic.bin2string
 			}
 		], {
-			placeHolder: '选择一种算法'
+			placeHolder: 'choose an algorithm'
 		});
 		if (algorithm) {
 			let result = algorithm.target(text);
@@ -477,81 +477,81 @@ exports.activate = context => {
 		let text = editor.document.getText(selection).trim();
 		let algorithm = await vscode.window.showQuickPick([{
 				label: "Crack Hash",
-				detail: "破解选中的哈希值",
+				detail: "Cracking the selected hash",
 				target: crackHash
 			},
 			{
 				label: "Crack Hashes In File",
-				detail: "破解当前文件中所有的哈希值",
+				detail: "Cracking all hashes in the current file",
 				target: crackHashInFile
 			},
 			{
 				label: "Symmetric Decryption",
-				detail: "对称密码解密算法，密文格式为Base64",
+				detail: "Symmetric cipher decryption algorithm, the ciphertext format is Base64",
 				target: symmetricCryption
 			},
 			{
 				label: "Symmetric Encryption",
-				detail: "对称密码加密算法，密文格式为Base64",
+				detail: "Symmetric cipher encryption algorithm, the ciphertext format is Base64",
 				target: symmetricCryption
 			},
 			{
 				label: "RSA Decryption",
-				detail: "使用公钥或私钥文件进行RSA解密",
+				detail: "RSA decryption using public or private key file",
 				target: rsaCryption
 			},
 			{
 				label: "RSA Encryption",
-				detail: "使用公钥或私钥文件进行RSA加密",
+				detail: "RSA encryption using public or private key files",
 				target: rsaCryption
 			},
 			{
 				label: "Caesar Cipher",
-				detail: "凯撒密码",
+				detail: "Caesar Cipher",
 				target: Caesar
 			},
 			{
 				label: "Character Offset",
-				detail: "字符位移",
+				detail: "Character Offset",
 				target: Shift
 			},
 			{
 				label: "Fence Decode",
-				detail: "栅栏密码解密",
+				detail: "Fence Decode",
 				target: Fence
 			},
 			{
 				label: "Fence Encode",
-				detail: "栅栏密码加密",
+				detail: "Fence Encode",
 				target: Fence
 			},
 			{
 				label: "Vigenere Encode",
-				detail: "维基尼亚加密",
+				detail: "Vigenere Encode",
 				target: Vigenere
 			},
 			{
 				label: "Vigenere Decode",
-				detail: "维基尼亚解密",
+				detail: "Vigenere Decode",
 				target: Vigenere
 			},
 			{
 				label: "Vigenere Decode with No Key",
-				detail: "维基尼亚无秘钥解密",
+				detail: "Vigenere Decode with No Key",
 				target: vigenereAutoDecode
 			},
 			{
 				label: "Morse Encode",
-				detail: "摩斯密码加密",
+				detail: "Morse Encode",
 				target: Morse
 			},
 			{
 				label: "Morse Decode",
-				detail: "摩斯密码解密",
+				detail: "Morse Decode",
 				target: Morse
 			}
 		], {
-			placeHolder: '选择一种算法'
+			placeHolder: 'choose an algorithm'
 		});
 		if (algorithm) {
 			algorithm.target(text, algorithm.label);
@@ -565,61 +565,61 @@ exports.activate = context => {
 		let text = editor.document.getText(selection).trim();
 		let algorithm = await vscode.window.showQuickPick([{
 				label: "Reverse String",
-				detail: "字符串逆转",
+				detail: "Reverse String",
 				target: manip.reverseString
 			},
 			{
 				label: "Upper Case",
-				detail: "全部大写",
+				detail: "To Upper Case",
 				target: manip.upperString
 			},
 			{
 				label: "Lower Case",
-				detail: "全部小写",
+				detail: "To Lower Case",
 				target: manip.lowerString
 			},
 			{
 				label: "Strip String",
-				detail: "去除左右空格、换行",
+				detail: "Remove left and right spaces and newlines",
 				target: manip.stripString
 			},
 			{
 				label: "Space To None",
-				detail: "去除所有空格",
+				detail: "remove all spaces",
 				target: manip.space2None
 			},
 			{
 				label: "Space To Line",
-				detail: "空格转换行",
+				detail: "space conversion to new line",
 				target: manip.space2Line
 			},
 			{
 				label: "Convert Path",
-				detail: "\\和/互转",
+				detail: "\\ and / interchange",
 				target: manip.convPath
 			},
 			{
 				label: "Title Case",
-				detail: "所有词首字母大写",
+				detail: "Capitalize all words",
 				target: manip.titleCase
 			},
 			{
 				label: "String Lenght",
-				detail: "获取文本长度",
+				detail: "Get text length",
 				target: manip.stringLen
 			},
 			{
 				label: "Add Quot By Comma",
-				detail: "为每个以逗号分隔的词加上双引号",
+				detail: "Put double quotes around each comma-separated word",
 				target: manip.addQuotByComma
 			},
 			{
 				label: "Add Quot By Space",
-				detail: "为每个以空格分隔的词加上双引号",
+				detail: "Put double quotes around each space-separated word",
 				target: manip.addQuotBySpace
 			}
 		], {
-			placeHolder: '选择一种处理方案'
+			placeHolder: 'Choose a conversion type'
 		});
 		if (algorithm) {
 			let result = algorithm.target(text);
@@ -627,7 +627,7 @@ exports.activate = context => {
 				showUpdate(algorithm.label, text, result, true);
 			} else {
 				showUpdate(algorithm.label, text, result, false);
-				vscode.window.showInformationMessage("长度为：" + result);
+				vscode.window.showInformationMessage("The length is: " + result);
 			}
 		}
 
@@ -639,9 +639,9 @@ exports.activate = context => {
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('crypto.outputColorPatch', async () => {
-		let choise = await vscode.window.showInformationMessage("如果安装本插件后，本插件的输出没有高亮，或者造成其他插件的输出没有高亮，则是因为和其他一些插件的输出语法产生了冲突，是否尝试自动修复这些冲突？", "是", "否")
-		if (choise == "是") {
-			print("正在尝试寻找问题···");
+		let choise = await vscode.window.showInformationMessage("If the output of this plugin is not highlighted, or the output of other plugins is not highlighted after installing this plugin, it is because of conflicts with the output syntax of some other plugins. Do you try to fix these conflicts automatically? ", "Yes", "No")
+		if (choise == "Yes") {
+			print("trying to find the problem...");
 			let langFile = __dirname + "/syntaxes/crypto-tools-output.tmLanguage";
 			let file = fs.readFileSync(langFile, "utf-8");
 			let lang = getLang();
@@ -649,9 +649,9 @@ exports.activate = context => {
 			console.log(New);
 			fs.writeFileSync(langFile, New);
 			if (lang) {
-				print("语法文件已整合，请重启编辑器！")
+				print("The grammar file has been integrated, please restart the editor!")
 			} else {
-				print("未发现冲突的文件！")
+				print("No conflicting files found!")
 			}
 		}
 
