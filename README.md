@@ -1,6 +1,6 @@
 # Crypto Tools
 
-Crypto tools is a powerful tool which contains lots of encoding/decoding and encryption/decryption tools like base64、hash、urlencode、AES、RSA、Vigenere、Caesar、etc.,and additional provides some text manipulation functions
+Crypto tools is a powerful tool which contains lots of encoding/decoding and encryption/decryption tools like base64, hash, urlencode, AES, RSA, Vigenere, Caesar, etc., and additional provides some text manipulation functions
 
 ## Features
 
